@@ -13,6 +13,7 @@ import numpy as np
 data = pd.read_csv("women-stem.csv")
 # data = data.query("Major_category == 'Engineering'")
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
+server = app.server
 app.title = "Women in STEM"
 
 app.layout = dbc.Container(
