@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 
 data = pd.read_csv("women-stem.csv")
-# data = data.query("Major_category == 'Engineering'")
+
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
 server = app.server
 app.title = "Women in STEM"
@@ -51,12 +51,37 @@ app.layout = dbc.Container(
                 dcc.Dropdown(id="pick-major", className="mb-2"),
                 dcc.Graph(id="total_bar")],
                 className="p-2"
-            )]
+            )],
+            width=6
+        ),
+        dbc.Col(
+            [dbc.Card(
+                [html.H5("What is the most and least popular major in each major category?"),
+                dcc.Graph(
+                    id="popularity_chart",
+                    figure={
+                        "data": [
+                            {"x": data["Major_category"],
+                            "y": data["Total"],
+                            "type": "bar"}
+                        ],
+                        "layout": {
+
+                        }
+                    }
+                )],
+                className="p-2"
+            )],
+            width=6
         )],
         className="mt-2 mb-2"
     )],
     fluid=True
 )
+
+# in a major category (make a dropdown for this), 
+# sort majors from most popular to least (total of students)
+# bar chart 
 
 @app.callback(
     [Output("pick-major", "options"),
