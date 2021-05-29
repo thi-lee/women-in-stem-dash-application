@@ -11,6 +11,10 @@ import pandas as pd
 import numpy as np
 
 data = pd.read_csv("women-stem.csv")
+data.Major = data.Major.str.capitalize()
+# sorted_data = data.query("Major_category == 'Engineering'")
+data.sort_values(by=['Total'], inplace=True)
+print(data)
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
 server = app.server
@@ -58,30 +62,49 @@ app.layout = dbc.Container(
             [dbc.Card(
                 [html.H5("What is the most and least popular major in each major category?"),
                 dcc.Graph(
-                    id="popularity_chart",
+                    id="",
                     figure={
                         "data": [
-                            {"x": data["Major_category"],
+                            {"x": data["Major"],
                             "y": data["Total"],
                             "type": "bar"}
                         ],
                         "layout": {
-
+                            
                         }
-                    }
+                    },
+                    className="pb-5"
                 )],
                 className="p-2"
             )],
             width=6
         )],
         className="mt-2 mb-2"
-    )],
+    ), 
+    # dbc.Row(
+    #     [dbc.Col(
+    #         [dcc.Graph(
+    #             id="popularity_chart",
+    #             figure=
+    #             {
+    #                 "data": [
+    #                     {"x": sorted_data["Total"],
+    #                     "y": sorted_data["Major"],
+    #                     "type": "bar", 
+    #                     "orientation": "h", 
+    #                     "x": 10000}
+    #                 ],
+    #                 "layout": {
+                        
+    #                 }
+    #             },
+    #             className="pb-5"
+    #         )]
+    #     )]
+    # )
+    ],
     fluid=True
 )
-
-# in a major category (make a dropdown for this), 
-# sort majors from most popular to least (total of students)
-# bar chart 
 
 @app.callback(
     [Output("pick-major", "options"),
@@ -97,7 +120,7 @@ def choose_category(pick_category):
     if pick_category == 'Major_category':
         default_value = 'Engineering'
     else:
-        default_value = 'COMPUTER ENGINEERING'
+        default_value = 'Computer engineering'
     return major_or_major_category, default_value
 
 @app.callback(
