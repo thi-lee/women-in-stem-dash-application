@@ -3,18 +3,25 @@ import dash_core_components as dcc
 import dash_html_components as html 
 import dash_bootstrap_components as dbc
 
+import pandas as pd
+import numpy as np
+
 import plotly.express as px
 from dash.dependencies import Input, Output
 import plotly.graph_objects as go
-
-import pandas as pd
-import numpy as np
 
 data = pd.read_csv("women-stem.csv")
 data.Major = data.Major.str.capitalize()
 # sorted_data = data.query("Major_category == 'Engineering'")
 data.sort_values(by=['Total'], inplace=True)
-print(data)
+
+external_stylesheets = [
+    {
+        "href": "https://fonts.googleapis.com/css2?"
+        "family=Lato:wght@400;700&display=swap",
+        "rel": "stylesheet",
+    },
+]
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
 server = app.server
@@ -38,6 +45,50 @@ app.layout = dbc.Container(
             width=12
         )],
         className="mt-2 mb-2"
+    ),
+
+    dbc.Row(
+        [dbc.Col(
+            dbc.Card(
+                [dbc.CardHeader("MAJOR CATEGORY", className="font-weight-bolder text-center text-info"),
+                dbc.CardBody(
+                    dcc.Dropdown(
+                        id="major-cat-dropdown",
+                        options=[
+                            {'label': major_category, 'value': major_category}
+                            for major_category in np.sort(data.Major_category.unique())
+                        ],
+                        value="Engineering"
+                    ),
+                    className="pt-2 pb-3 font-weight-bolder text-center"
+                )]
+            ),
+            width=6
+        ),
+        dbc.Col(
+            dbc.Card(
+                [dbc.CardHeader("TOTAL", className="text-info text-center"),
+                dbc.CardBody(id="major-cat-total")]
+            ),
+            width=2,
+            className="major-cat-stats font-weight-bolder text-center"
+        ),
+        dbc.Col(
+            dbc.Card(
+                [dbc.CardHeader("WOMEN", className="text-info text-center"),
+                dbc.CardBody(id="major-cat-women")]
+            ),
+            width=2,
+            className="major-cat-stats font-weight-bolder text-center"
+        ),
+        dbc.Col(
+            dbc.Card(
+                [dbc.CardHeader("MEN", className="text-info text-center"),
+                dbc.CardBody(id="major-cat-men")]
+            ),
+            width=2,
+            className="major-cat-stats font-weight-bolder text-center"
+        )]
     ),
 
     dbc.Row(
@@ -80,31 +131,24 @@ app.layout = dbc.Container(
             width=6
         )],
         className="mt-2 mb-2"
-    ), 
-    # dbc.Row(
-    #     [dbc.Col(
-    #         [dcc.Graph(
-    #             id="popularity_chart",
-    #             figure=
-    #             {
-    #                 "data": [
-    #                     {"x": sorted_data["Total"],
-    #                     "y": sorted_data["Major"],
-    #                     "type": "bar", 
-    #                     "orientation": "h", 
-    #                     "x": 10000}
-    #                 ],
-    #                 "layout": {
-                        
-    #                 }
-    #             },
-    #             className="pb-5"
-    #         )]
-    #     )]
-    # )
-    ],
+    )],
     fluid=True
 )
+
+@app.callback(
+    [Output("major-cat-total", "children"),
+    Output("major-cat-women", "children"),
+    Output("major-cat-men", "children")],
+    [Input("major-cat-dropdown", "value")]
+)
+def major_cat(major_cat_dropdown):
+    mask = (data.Major_category == major_cat_dropdown)
+    filtered_data = data.loc[mask, :]
+    major_cat_total = filtered_data.Total.sum()
+    major_cat_women = filtered_data.Women.sum()
+    major_cat_men = filtered_data.Men.sum()
+    
+    return major_cat_total, major_cat_women, major_cat_men
 
 @app.callback(
     [Output("pick-major", "options"),
