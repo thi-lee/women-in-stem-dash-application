@@ -12,29 +12,17 @@ import plotly.graph_objects as go
 
 data = pd.read_csv("women-stem.csv")
 data.Major = data.Major.str.capitalize()
-# sorted_data = data.query("Major_category == 'Engineering'")
-data.sort_values(by=['Total'], inplace=True)
-
-# print(data.loc[data.Major == 'Biology'])
-
-external_stylesheets = [
-    {
-        "href": "https://fonts.googleapis.com/css2?"
-        "family=Lato:wght@400;700&display=swap",
-        "rel": "stylesheet",
-    },
-]
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
 server = app.server
-app.title = "Women in STEM"
+app.title = "STEM majors population stats"
 
 app.layout = dbc.Container(
     [dbc.Row(
         [dbc.Col(
             [dbc.Card(
                 [dbc.CardBody(
-                    [html.H1("Women in STEM"),
+                    [html.H1("Number of students in STEM"),
                     html.H3("Let's answer some questions"),
                     html.Ol([
                         html.Li("Which major is most and least popular in a major category?"),
@@ -116,8 +104,8 @@ app.layout = dbc.Container(
                         value="total",
                         options=[
                             {"label": "Total", "value": "total"},
-                            {"label": "Women", "value": "women"},
-                            {"label": "Men", "value": "men"}
+                            {"label": "Women", "value": "Women"},
+                            {"label": "Men", "value": "Men"}
                         ]
                     )
                 ]),
@@ -126,54 +114,17 @@ app.layout = dbc.Container(
                     dcc.RadioItems(
                         id="pick-least-most",
                         inputClassName="ml-3",
+                        value="category ascending",
                         options=[
-                            {"label": "Least popular to most", "value": "least_most"},
-                            {"label": "Most popular to least", "value": "most_least"}
+                            {"label": "Default", "value": "category ascending"},
+                            {"label": "Least popular to most", "value": "total ascending"},
+                            {"label": "Most popular to least", "value": "total descending"}
                         ]
                     )
                 ]),
                 dcc.Graph(id="bar-chart")
             ])
-        ]),
-        # dbc.Col(
-        #     [dbc.Card(
-        #         [html.H5("What is the difference in number of men and women in STEM by major/major_category?"),
-        #         dcc.RadioItems(
-        #             id="major-or-major-category",
-        #             options=[
-        #                 {'label': 'Major', 'value': 'Major'},
-        #                 {'label': 'Major category', 'value': 'Major_category'},
-        #             ],
-        #             value='Major'
-        #         ),
-        #         dcc.Dropdown(id="pick-major", className="mb-2"),
-        #         dcc.Graph(id="total_bar")],
-        #         className="p-2"
-        #     )],
-        #     width=6
-        # ),
-        # dbc.Col(
-        #     [dbc.Card(
-        #         [html.H5("What is the most and least popular major in each major category?"),
-        #         dcc.Graph(
-        #             id="",
-        #             figure={
-        #                 "data": [
-        #                     {"x": data["Major"],
-        #                     "y": data["Total"],
-        #                     "type": "bar"}
-        #                 ],
-        #                 "layout": {
-                            
-        #                 }
-        #             },
-        #             className="pb-5"
-        #         )],
-        #         className="p-2"
-        #     )],
-        #     width=6
-        # )
-        ],
+        ]),],
         className="mt-2 mb-2"
     )],
     fluid=True
@@ -197,66 +148,24 @@ def major_cat(major_cat_dropdown):
 @app.callback(
     Output("bar-chart", "figure"),
     [Input("pick-category", "value"),
-    Input("pick-gender", "value")]
+    Input("pick-gender", "value"),
+    Input("pick-least-most", "value")]
 )
-def pick_category(pick_category, pick_gender):
+def pick_category(pick_category, pick_gender, pick_least_most):
     
     x = data[pick_category]
 
-    if pick_gender == "men":
-        fig = go.Figure(go.Bar(x=x, y=data["Men"], name="Men"))
-    elif pick_gender == "women":
-        fig = go.Figure(go.Bar(x=x, y=data["Women"], name="Women"))
-    elif pick_gender == "total":
-        fig = go.Figure(go.Bar(x=x, y=data["Men"], name="Men"))
-        fig.add_trace(go.Bar(x=x, y=data["Women"], name="Women"))
-        fig.update_layout(barmode="stack", xaxis={"categoryorder": "category ascending"})
+    if pick_gender == "total":
+        fig = go.Figure(go.Bar(x=x, y=data["Women"], name="Men"))
+        fig.add_trace(go.Bar(x=x, y=data["Men"], name="Women"))
+    else:
+        fig = go.Figure(go.Bar(x=x, y=data[pick_gender], name=pick_gender))
+
+    fig.update_layout(barmode="stack", xaxis={"categoryorder": pick_least_most})
 
     bar_chart_figure = fig
 
     return bar_chart_figure
-
-# @app.callback(
-#     [Output("pick-major", "options"),
-#     Output("pick-major", "value")],
-#     [Input("major-or-major-category", "value")]
-# )
-# def choose_category(pick_category):
-#     filtered_data = data[pick_category]
-#     major_or_major_category = [
-#         {'label': pick_category, 'value': pick_category}
-#         for pick_category in np.sort(filtered_data.unique())
-#     ]
-#     if pick_category == 'Major_category':
-#         default_value = 'Engineering'
-#     else:
-#         default_value = 'Computer engineering'
-#     return major_or_major_category, default_value
-
-# @app.callback(
-#     Output("total_bar", "figure"),
-#     [Input("pick-major", "value"),
-#     Input("major-or-major-category", "value")]
-# )
-# def update_bar_chart(major, category):
-#     if category == "Major_category":
-#         mask = (
-#             (data.Major_category == major)
-#         )
-#     elif category == "Major":
-#         mask = (
-#             (data.Major == major)
-#         )
-
-#     filtered_data = data.loc[mask, :]
-
-#     x = filtered_data[category]
-#     fig = go.Figure(go.Bar(x=x, y=filtered_data["Men"], name="Men", marker_color="#1F3F49"))
-#     fig.add_trace(go.Bar(x=x, y=filtered_data["Women"], name='Women', marker_color="#CED2CC"))
-#     fig.update_layout(barmode='stack', xaxis={'categoryorder':'category ascending'})
-
-#     total_bar_figure = fig
-#     return total_bar_figure
 
 if __name__ == "__main__":
     app.run_server(debug=True)
